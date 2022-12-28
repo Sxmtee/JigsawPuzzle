@@ -4,7 +4,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image/image.dart' as ui;
+import 'package:jigsawpuzzle/Models/blockClass.dart';
 import 'dart:math' as math;
+
+import 'package:jigsawpuzzle/Models/jigsawPos.dart';
 
 class JigsawWidget extends StatefulWidget {
   Widget child;
@@ -15,7 +18,7 @@ class JigsawWidget extends StatefulWidget {
 }
 
 class _JigsawWidgetState extends State<JigsawWidget> {
-  GlobalKey _globalKey = GlobalKey();
+  final GlobalKey _globalKey = GlobalKey();
   late ui.Image fullImage;
   late Size size;
 
@@ -57,8 +60,35 @@ class _JigsawWidgetState extends State<JigsawWidget> {
 
         Offset offsetCenter = Offset(widthPerBlock / 2, heightPerBlock / 2);
 
-        // make random jigsaw pointer in or out
-        JigsawPos jigsawPos = JigsawPos();
+        //make random jigsaw pointer in or out
+        JigsawPos jigsawPosSide = JigsawPos(
+          bottom: y == ySplitCount - 1 ? 0 : randomPosCol,
+          left: x == 0
+              ? 0
+              : -images[y][x - 1].jigsawBlockWidget.imageBox.posSide.right,
+          right: x == xSplitCount - 1 ? 0 : randomPosRow,
+          top: y == 0
+              ? 0
+              : -images[y][x - 1].jigsawBlockWidget.imageBox.posSide.bottom,
+        );
+
+        double xAxis = widthPerBlock * x;
+        double yAxis = widthPerBlock * y;
+
+        //pointing size
+        double minSize = math.min(widthPerBlock, heightPerBlock) / 15 * 4;
+
+        offsetCenter = Offset(
+          (widthPerBlock / 2) + (jigsawPosSide.left == 1 ? minSize : 0),
+          (heightPerBlock / 2) + (jigsawPosSide.top == 1 ? minSize : 0),
+        );
+
+        //change axis for posSideEffect
+        xAxis -= jigsawPosSide.left == 1 ? minSize : 0;
+        yAxis -= jigsawPosSide.top == 1 ? minSize : 0;
+
+        //get width and height after change Axis Side Effect
+
       }
     }
   }
@@ -91,7 +121,3 @@ class _JigsawWidgetState extends State<JigsawWidget> {
     );
   }
 }
-
-class BlockClass {}
-
-class JigsawPos {}
