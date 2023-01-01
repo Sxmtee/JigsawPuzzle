@@ -86,6 +86,10 @@ class _JigsawWidgetState extends State<JigsawWidget> {
   ValueNotifier<List<BlockClass>> blocksNotifier =
       ValueNotifier<List<BlockClass>>(<BlockClass>[]);
 
+  //to save current touchdown offset & current index puzzle
+  final Offset _pos = Offset.zero;
+  final int _index = 0;
+
   _getImageFromWidget() async {
     RenderRepaintBoundary? boundary =
         _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
@@ -132,7 +136,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
           right: x == xSplitCount - 1 ? 0 : randomPosRow,
           top: y == 0
               ? 0
-              : -images[y][x - 1].jigsawBlockWidget.imageBox.posSide.bottom,
+              : -images[y - 1][x].jigsawBlockWidget.imageBox.posSide.bottom,
         );
 
         double xAxis = widthPerBlock * x;
@@ -190,8 +194,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
 
   resetJigsaw() {
     images.clear();
-    blocksNotifier.value =
-        ValueNotifier<List<BlockClass>>(<BlockClass>[]) as List<BlockClass>;
+    blocksNotifier = ValueNotifier<List<BlockClass>>(<BlockClass>[]);
     blocksNotifier.notifyListeners();
     setState(() {});
   }
@@ -203,7 +206,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    Size sizeBox = MediaQuery.of(context).size; //change??
     return ValueListenableBuilder(
         valueListenable: blocksNotifier,
         builder: (context, List<BlockClass> blocks, child) {
@@ -211,7 +214,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
 
           return Container(
             // set height for jigsaw base
-            height: size.width,
+            height: sizeBox.width,
             child: Container(
               child: Stack(
                 children: [
@@ -220,20 +223,34 @@ class _JigsawWidgetState extends State<JigsawWidget> {
                       key: _globalKey,
                       child: Container(
                         color: Colors.red,
-                        height: size.width,
-                        width: size.width,
+                        height: double.maxFinite,
+                        width: double.maxFinite,
                         child: widget.child,
                       ),
                     )
                   ],
-                  if (blocks.isNotEmpty)
-                    ...blocks.asMap().entries.map(((map) {
-                      return Positioned(
-                        child: Container(
-                          child: map.value.jigsawBlockWidget,
-                        ),
-                      );
-                    }))
+                  Offstage(
+                    offstage: !(blocks.isNotEmpty),
+                    child: Container(
+                      color: Colors.blue,
+                      height: sizeBox.height,
+                      width: sizeBox.width,
+                      child: Stack(
+                        children: [
+                          if (blocks.isNotEmpty)
+                            ...blocks.asMap().entries.map(((map) {
+                              return Positioned(
+                                left: map.value.offset.dx,
+                                top: map.value.offset.dy,
+                                child: Container(
+                                  child: map.value.jigsawBlockWidget,
+                                ),
+                              );
+                            }))
+                        ],
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
