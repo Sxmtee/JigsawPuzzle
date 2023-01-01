@@ -54,7 +54,10 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
                         }),
                         child: const Text("Generate")),
                     ElevatedButton(
-                        onPressed: (() {}), child: const Text("Reset")),
+                        onPressed: (() {
+                          jigkey.currentState!.resetJigsaw();
+                        }),
+                        child: const Text("Reset")),
                   ],
                 ),
               )
@@ -80,6 +83,8 @@ class _JigsawWidgetState extends State<JigsawWidget> {
   late Size size;
 
   List<List<BlockClass>> images = <List<BlockClass>>[];
+  ValueNotifier<List<BlockClass>> blocksNotifier =
+      ValueNotifier<List<BlockClass>>(<BlockClass>[]);
 
   _getImageFromWidget() async {
     RenderRepaintBoundary? boundary =
@@ -98,7 +103,8 @@ class _JigsawWidgetState extends State<JigsawWidget> {
     images = <List<BlockClass>>[];
 
     // image from out boundary
-    if (fullImage == null) fullImage = await _getImageFromWidget();
+
+    fullImage = await _getImageFromWidget();
 
     // split image using crop
     int xSplitCount = 2;
@@ -177,6 +183,16 @@ class _JigsawWidgetState extends State<JigsawWidget> {
             jigsawBlockWidget: JigsawBlockWidget(imageBox: imageBox)));
       }
     }
+    blocksNotifier.value = images.expand((image) => image).toList();
+    blocksNotifier.notifyListeners();
+    setState(() {});
+  }
+
+  resetJigsaw() {
+    images.clear();
+    blocksNotifier.value =
+        ValueNotifier<List<BlockClass>>(<BlockClass>[]) as List<BlockClass>;
+    blocksNotifier.notifyListeners();
     setState(() {});
   }
 
@@ -188,24 +204,40 @@ class _JigsawWidgetState extends State<JigsawWidget> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    return Container(
-      // set height for jigsaw base
-      height: size.width,
-      child: Container(
-        child: Stack(
-          children: [
-            RepaintBoundary(
-              key: _globalKey,
-              child: Container(
-                color: Colors.red,
-                height: size.width,
-                width: size.width,
-                child: widget.child,
+    return ValueListenableBuilder(
+        valueListenable: blocksNotifier,
+        builder: (context, List<BlockClass> blocks, child) {
+          // List<BlockClass> b
+
+          return Container(
+            // set height for jigsaw base
+            height: size.width,
+            child: Container(
+              child: Stack(
+                children: [
+                  if (blocks.isEmpty) ...[
+                    RepaintBoundary(
+                      key: _globalKey,
+                      child: Container(
+                        color: Colors.red,
+                        height: size.width,
+                        width: size.width,
+                        child: widget.child,
+                      ),
+                    )
+                  ],
+                  if (blocks.isNotEmpty)
+                    ...blocks.asMap().entries.map(((map) {
+                      return Positioned(
+                        child: Container(
+                          child: map.value.jigsawBlockWidget,
+                        ),
+                      );
+                    }))
+                ],
               ),
-            )
-          ],
-        ),
-      ),
-    );
+            ),
+          );
+        });
   }
 }

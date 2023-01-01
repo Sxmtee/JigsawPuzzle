@@ -13,6 +13,8 @@ class JigsawBlockWidget extends StatefulWidget {
 class _JigsawBlockWidgetState extends State<JigsawBlockWidget> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Container(
+      child: widget.imageBox.image,
+    );
   }
 }
