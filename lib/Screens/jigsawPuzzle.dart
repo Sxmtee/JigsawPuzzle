@@ -87,8 +87,8 @@ class _JigsawWidgetState extends State<JigsawWidget> {
       ValueNotifier<List<BlockClass>>(<BlockClass>[]);
 
   //to save current touchdown offset & current index puzzle
-  final Offset _pos = Offset.zero;
-  final int _index = 0;
+  Offset _pos = Offset.zero;
+  int _index = 0;
 
   _getImageFromWidget() async {
     RenderRepaintBoundary? boundary =
@@ -114,7 +114,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
     int xSplitCount = 2;
     int ySplitCount = 2;
 
-    double widthPerBlock = fullImage.width / xSplitCount;
+    double widthPerBlock = fullImage.height / xSplitCount;
     double heightPerBlock = fullImage.height / ySplitCount;
 
     for (var y = 0; y < ySplitCount; y++) {
@@ -188,6 +188,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
       }
     }
     blocksNotifier.value = images.expand((image) => image).toList();
+    blocksNotifier.value.shuffle();
     blocksNotifier.notifyListeners();
     setState(() {});
   }
@@ -210,51 +211,150 @@ class _JigsawWidgetState extends State<JigsawWidget> {
     return ValueListenableBuilder(
         valueListenable: blocksNotifier,
         builder: (context, List<BlockClass> blocks, child) {
-          // List<BlockClass> b
-
+          List<BlockClass> blockNotDone = blocks
+              .where((block) => !block.jigsawBlockWidget.imageBox.isDone)
+              .toList();
+          List<BlockClass> blockDone = blocks
+              .where((block) => block.jigsawBlockWidget.imageBox.isDone)
+              .toList();
           return Container(
             // set height for jigsaw base
             height: sizeBox.width,
             child: Container(
-              child: Stack(
-                children: [
-                  if (blocks.isEmpty) ...[
-                    RepaintBoundary(
-                      key: _globalKey,
+              // color: Colors.red,
+              child: Listener(
+                onPointerUp: (event) {
+                  if (blockNotDone.isEmpty) {
+                    resetJigsaw();
+                  }
+                  if (_index == null) {
+                    setState(() {
+                      _index = 0;
+                    });
+                  }
+                },
+                onPointerMove: (event) {
+                  if (_index == null) return;
+
+                  Offset offset = event.localPosition - _pos;
+
+                  blockNotDone[_index].offset = offset;
+
+                  if ((blockNotDone[_index].offset -
+                              blockNotDone[_index].offsetDefault)
+                          .distance <
+                      5) {
+                    //drag box close to default position will trigger condition
+                    blockNotDone[_index].jigsawBlockWidget.imageBox.isDone =
+                        true;
+                    blockNotDone[_index].offset =
+                        blockNotDone[_index].offsetDefault;
+                  }
+
+                  setState(() {});
+                },
+                child: Stack(
+                  children: [
+                    if (blocks.isEmpty) ...[
+                      RepaintBoundary(
+                        key: _globalKey,
+                        child: Container(
+                          color: Colors.red,
+                          height: double.maxFinite,
+                          width: double.maxFinite,
+                          child: widget.child,
+                        ),
+                      )
+                    ],
+                    Offstage(
+                      offstage: !(blocks.isNotEmpty),
                       child: Container(
-                        color: Colors.red,
-                        height: double.maxFinite,
-                        width: double.maxFinite,
-                        child: widget.child,
+                        // color: Colors.redAccent,
+                        height: sizeBox.height,
+                        width: sizeBox.width,
+                        child: CustomPaint(
+                          //drawing linebase for jigsaw
+                          painter: JigsawPainterBackground(blocks),
+                          child: Stack(
+                            children: [
+                              if (blockDone.isNotEmpty)
+                                ...blockDone.map(((map) {
+                                  return Positioned(
+                                    left: map.offset.dx,
+                                    top: map.offset.dy,
+                                    child: Container(
+                                      child: map.jigsawBlockWidget,
+                                    ),
+                                  );
+                                })),
+                              if (blockNotDone.isNotEmpty)
+                                ...blockNotDone.asMap().entries.map(((map) {
+                                  return Positioned(
+                                    left: map.value.offset.dx,
+                                    top: map.value.offset.dy,
+                                    child: Offstage(
+                                      offstage: !(_index == map.key),
+                                      child: GestureDetector(
+                                        // for event touchdown
+                                        onTapDown: (details) {
+                                          if (map.value.jigsawBlockWidget
+                                              .imageBox.isDone) return;
+
+                                          setState(() {
+                                            _pos = details.localPosition;
+                                            _index = map.key;
+                                          });
+                                        },
+                                        child: Container(
+                                          child: map.value.jigsawBlockWidget,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }))
+                            ],
+                          ),
+                        ),
                       ),
                     )
                   ],
-                  Offstage(
-                    offstage: !(blocks.isNotEmpty),
-                    child: Container(
-                      color: Colors.blue,
-                      height: sizeBox.height,
-                      width: sizeBox.width,
-                      child: Stack(
-                        children: [
-                          if (blocks.isNotEmpty)
-                            ...blocks.asMap().entries.map(((map) {
-                              return Positioned(
-                                left: map.value.offset.dx,
-                                top: map.value.offset.dy,
-                                child: Container(
-                                  child: map.value.jigsawBlockWidget,
-                                ),
-                              );
-                            }))
-                        ],
-                      ),
-                    ),
-                  )
-                ],
+                ),
               ),
             ),
           );
         });
+  }
+}
+
+class JigsawPainterBackground extends CustomPainter {
+  List<BlockClass> blocks;
+  JigsawPainterBackground(this.blocks);
+  @override
+  void paint(Canvas canvas, Size size) {
+    // TODO: implement paint
+    Paint paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.black12
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    Path path = Path();
+
+    //loop blocks so we can draw line at base
+    for (var element in blocks) {
+      Path pathTemp = getPiecePath(
+          element.jigsawBlockWidget.imageBox.size,
+          element.jigsawBlockWidget.imageBox.radiusPoint,
+          element.jigsawBlockWidget.imageBox.offsetCenter,
+          element.jigsawBlockWidget.imageBox.posSide);
+
+      path.addPath(pathTemp, element.offsetDefault);
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }
