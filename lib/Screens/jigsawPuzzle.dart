@@ -48,7 +48,7 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
                       padding: EdgeInsets.all(22.0),
                       child: Image(
                         fit: BoxFit.contain,
-                        image: AssetImage("images/duck.png"),
+                        image: AssetImage("images/nature.png"),
                       ),
                     ),
                   ),
@@ -106,7 +106,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
 
   //to save current touchdown offset & current index puzzle
   Offset _pos = Offset.zero;
-  int _index = 0;
+  late int _index;
 
   _getImageFromWidget() async {
     RenderRepaintBoundary? boundary =
@@ -125,7 +125,6 @@ class _JigsawWidgetState extends State<JigsawWidget> {
     images = <List<BlockClass>>[];
 
     // image from out boundary
-
     fullImage = await _getImageFromWidget();
 
     // split image using crop
@@ -239,165 +238,159 @@ class _JigsawWidgetState extends State<JigsawWidget> {
           List<BlockClass> blockDone = blocks
               .where((block) => block.jigsawBlockWidget.imageBox.isDone)
               .toList();
-          return Container(
-            // set height for jigsaw base
-            child: Container(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: sizeBox.width,
-                    child: Listener(
-                      onPointerUp: (event) {
-                        if (blockNotDone.isEmpty) {
-                          resetJigsaw();
-                          //set callback for completing all piece
-                          widget.callbackFinish.call();
-                        }
-                        if (_index == null) {
-                          //carousel for change index
-                          _carouselController.nextPage(
-                              duration: const Duration(microseconds: 600));
-                          setState(() {
-                            // _index = 0;
-                          });
-                        }
-                      },
-                      onPointerMove: (event) {
-                        if (_index == null) return;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: sizeBox.width,
+                child: Listener(
+                  onPointerUp: (event) {
+                    if (blockNotDone.isEmpty) {
+                      resetJigsaw();
+                      //set callback for completing all piece
+                      widget.callbackFinish.call();
+                    }
+                    if (_index == null) {
+                      //carousel for change index
+                      _carouselController.nextPage(
+                          duration: const Duration(microseconds: 600));
+                      setState(() {
+                        // _index = 0;
+                      });
+                    }
+                  },
+                  onPointerMove: (event) {
+                    if (_index == null) return;
 
-                        Offset offset = event.localPosition - _pos;
+                    Offset offset = event.localPosition - _pos;
 
-                        blockNotDone[_index].offset = offset;
+                    blockNotDone[_index].offset = offset;
 
-                        if ((blockNotDone[_index].offset -
-                                    blockNotDone[_index].offsetDefault)
-                                .distance <
-                            5) {
-                          //drag box close to default position will trigger condition
-                          blockNotDone[_index]
-                              .jigsawBlockWidget
-                              .imageBox
-                              .isDone = true;
-                          blockNotDone[_index].offset =
-                              blockNotDone[_index].offsetDefault;
+                    if ((blockNotDone[_index].offset -
+                                blockNotDone[_index].offsetDefault)
+                            .distance <
+                        5) {
+                      //drag box close to default position will trigger condition
+                      blockNotDone[_index].jigsawBlockWidget.imageBox.isDone =
+                          true;
+                      blockNotDone[_index].offset =
+                          blockNotDone[_index].offsetDefault;
 
-                          _index = 0;
+                      _index = 0;
 
-                          blocksNotifier.notifyListeners();
+                      blocksNotifier.notifyListeners();
 
-                          //set callback success
-                          widget.callbackSuccess.call();
-                        }
+                      //set callback success
+                      widget.callbackSuccess.call();
+                    }
 
-                        setState(() {});
-                      },
-                      child: Stack(
-                        children: [
-                          if (blocks.isEmpty) ...[
-                            RepaintBoundary(
-                              key: _globalKey,
-                              child: Container(
-                                color: Colors.red,
-                                height: double.maxFinite,
-                                width: double.maxFinite,
-                                child: widget.child,
-                              ),
-                            )
-                          ],
-                          Offstage(
-                            offstage: !(blocks.isNotEmpty),
-                            child: Container(
-                              color: Colors.grey,
-                              height: sizeBox.height,
-                              width: sizeBox.width,
-                              child: CustomPaint(
-                                //drawing linebase for jigsaw
-                                painter: JigsawPainterBackground(blocks),
-                                child: Stack(
-                                  children: [
-                                    if (blockDone.isNotEmpty)
-                                      ...blockDone.map(((map) {
-                                        return Positioned(
-                                          left: map.offset.dx,
-                                          top: map.offset.dy,
-                                          child: Container(
-                                            child: map.jigsawBlockWidget,
-                                          ),
-                                        );
-                                      })),
-                                    if (blockNotDone.isNotEmpty)
-                                      ...blockNotDone
-                                          .asMap()
-                                          .entries
-                                          .map(((map) {
-                                        return Positioned(
-                                          left: map.value.offset.dx,
-                                          top: map.value.offset.dy,
-                                          child: Offstage(
-                                            offstage: !(_index == map.key),
-                                            child: GestureDetector(
-                                              // for event touchdown
-                                              onTapDown: (details) {
-                                                if (map.value.jigsawBlockWidget
-                                                    .imageBox.isDone) return;
-
-                                                setState(() {
-                                                  _pos = details.localPosition;
-                                                  _index = map.key;
-                                                });
-                                              },
-                                              child: Container(
-                                                child:
-                                                    map.value.jigsawBlockWidget,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }))
-                                  ],
-                                ),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    color: Colors.black,
-                    height: 100,
-                    child: CarouselSlider(
-                      carouselController: _carouselController,
-                      options: CarouselOptions(
-                        initialPage: _index,
-                        height: 80,
-                        aspectRatio: 1,
-                        viewportFraction: 0.15,
-                        enlargeCenterPage: true,
-                        enableInfiniteScroll: true,
-                        disableCenter: false,
-                        onPageChanged: (index, reason) {
-                          setState(() {
-                            _index = index; //outside
-                          });
-                        },
-                      ),
-                      items: blockNotDone.map((block) {
-                        Size sizeBlock = block.jigsawBlockWidget.imageBox.size;
-                        return FittedBox(
+                    setState(() {});
+                  },
+                  child: Stack(
+                    children: [
+                      if (blocks.isEmpty) ...[
+                        RepaintBoundary(
+                          key: _globalKey,
                           child: Container(
-                            width: sizeBlock.width,
-                            height: sizeBlock.height,
-                            child: block.jigsawBlockWidget,
+                            height: double.maxFinite,
+                            width: double.maxFinite,
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              // image: DecorationImage(
+                              //     fit: BoxFit.fill,
+                              //     image: AssetImage(
+                              //         "assets/images/nature.png"))
+                            ),
+                            child: widget.child,
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  )
-                ],
+                        )
+                      ],
+                      Offstage(
+                        offstage: !(blocks.isNotEmpty),
+                        child: Container(
+                          color: Colors.grey[800],
+                          height: sizeBox.height,
+                          width: sizeBox.width,
+                          child: CustomPaint(
+                            //drawing linebase for jigsaw
+                            painter: JigsawPainterBackground(blocks),
+                            child: Stack(
+                              children: [
+                                if (blockDone.isNotEmpty)
+                                  ...blockDone.map(((map) {
+                                    return Positioned(
+                                      left: map.offset.dx,
+                                      top: map.offset.dy,
+                                      child: Container(
+                                        child: map.jigsawBlockWidget,
+                                      ),
+                                    );
+                                  })),
+                                if (blockNotDone.isNotEmpty)
+                                  ...blockNotDone.asMap().entries.map(((map) {
+                                    return Positioned(
+                                      left: map.value.offset.dx,
+                                      top: map.value.offset.dy,
+                                      child: Offstage(
+                                        offstage: !(_index == map.key),
+                                        child: GestureDetector(
+                                          // for event touchdown
+                                          onTapDown: (details) {
+                                            if (map.value.jigsawBlockWidget
+                                                .imageBox.isDone) return;
+
+                                            setState(() {
+                                              _pos = details.localPosition;
+                                              _index = map.key;
+                                            });
+                                          },
+                                          child: Container(
+                                            child: map.value.jigsawBlockWidget,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }))
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
               ),
-            ),
+              Container(
+                color: Colors.black,
+                height: 100,
+                child: CarouselSlider(
+                  carouselController: _carouselController,
+                  options: CarouselOptions(
+                    initialPage: _index,
+                    height: 80,
+                    aspectRatio: 1,
+                    viewportFraction: 0.15,
+                    enlargeCenterPage: true,
+                    enableInfiniteScroll: true,
+                    disableCenter: false,
+                    onPageChanged: (index, reason) {
+                      _index = index; //outside
+                      setState(() {});
+                    },
+                  ),
+                  items: blockNotDone.map((block) {
+                    Size sizeBlock = block.jigsawBlockWidget.imageBox.size;
+                    return FittedBox(
+                      child: Container(
+                        width: sizeBlock.width,
+                        height: sizeBlock.height,
+                        child: block.jigsawBlockWidget,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              )
+            ],
           );
         });
   }
