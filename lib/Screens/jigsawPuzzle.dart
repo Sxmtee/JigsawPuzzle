@@ -27,7 +27,7 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
-          color: AppColors.primaryColor,
+          color: Colors.white,
           child: SafeArea(
             child: Column(
               children: [
@@ -47,7 +47,7 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
                     child: const Padding(
                       padding: EdgeInsets.all(22.0),
                       child: Image(
-                        fit: BoxFit.contain,
+                        fit: BoxFit.fill,
                         image: AssetImage("images/nature.png"),
                       ),
                     ),
@@ -108,16 +108,29 @@ class _JigsawWidgetState extends State<JigsawWidget> {
   Offset _pos = Offset.zero;
   late int _index;
 
+  // Future<Uint8List> _getImageFromWidget() async {
+  //   final RenderRepaintBoundary boundary =
+  //       _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+  //   final image = await boundary.toImage(pixelRatio: 1);
+  //   final byteData = await image.toByteData(format: ImageByteFormat.png);
+  //   final pngBytes = byteData!.buffer.asUint8List();
+  //   return pngBytes;
+  // }
+
   _getImageFromWidget() async {
-    RenderRepaintBoundary? boundary =
-        _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    try {
+      RenderRepaintBoundary? boundary = _globalKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
 
-    size = boundary.size;
-    var img = await boundary.toImage();
-    var byteData = await img.toByteData(format: ImageByteFormat.png);
-    var pngBytes = byteData!.buffer.asUint8List();
+      size = boundary.size;
+      var img = await boundary.toImage();
+      var byteData = await img.toByteData(format: ImageByteFormat.png);
+      var pngBytes = byteData!.buffer.asUint8List();
 
-    return ui.decodeImage(pngBytes);
+      return ui.decodeImage(pngBytes);
+    } catch (e) {
+      print(Text("Error: ${e.toString()}"));
+    }
   }
 
   Future<void> generalJigsawCropImage() async {
@@ -190,7 +203,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
         ImageBox imageBox = ImageBox(
             image: Image.memory(
               ui.encodePng(temp) as Uint8List,
-              fit: BoxFit.contain,
+              fit: BoxFit.fill,
             ),
             posSide: jigsawPosSide,
             offsetCenter: offsetCenter,
@@ -228,7 +241,7 @@ class _JigsawWidgetState extends State<JigsawWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Size sizeBox = MediaQuery.of(context).size; //change??
+    Size sizeBox = MediaQuery.of(context).size;
     return ValueListenableBuilder(
         valueListenable: blocksNotifier,
         builder: (context, List<BlockClass> blocks, child) {
@@ -296,10 +309,6 @@ class _JigsawWidgetState extends State<JigsawWidget> {
                             width: double.maxFinite,
                             decoration: const BoxDecoration(
                               color: Colors.blue,
-                              // image: DecorationImage(
-                              //     fit: BoxFit.fill,
-                              //     image: AssetImage(
-                              //         "assets/images/nature.png"))
                             ),
                             child: widget.child,
                           ),
