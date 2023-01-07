@@ -52,23 +52,25 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
                     ),
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                        onPressed: (() async {
-                          await jigkey.currentState!.generalJigsawCropImage();
-                        }),
-                        child: const Text("Generate")),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    ElevatedButton(
-                        onPressed: (() {
-                          jigkey.currentState!.resetJigsaw();
-                        }),
-                        child: const Text("Clear")),
-                  ],
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                          onPressed: (() async {
+                            await jigkey.currentState!.generalJigsawCropImage();
+                          }),
+                          child: const Text("Generate")),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      ElevatedButton(
+                          onPressed: (() {
+                            jigkey.currentState!.resetJigsaw();
+                          }),
+                          child: const Text("Clear")),
+                    ],
+                  ),
                 )
               ],
             ),
