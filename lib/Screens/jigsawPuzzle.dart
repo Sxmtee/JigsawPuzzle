@@ -9,7 +9,6 @@ import 'package:jigsawpuzzle/Models/blockClass.dart';
 import 'package:jigsawpuzzle/Models/imageBox.dart';
 import 'package:jigsawpuzzle/Models/jigsawPos.dart';
 import 'dart:math' as math;
-import 'package:jigsawpuzzle/Utils/appColors.dart';
 import 'package:jigsawpuzzle/Widgets/jigsawBlockWidget.dart';
 
 class JigsawPuzzle extends StatefulWidget {
@@ -48,7 +47,7 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
                       padding: EdgeInsets.all(22.0),
                       child: Image(
                         fit: BoxFit.fill,
-                        image: AssetImage("images/nature.png"),
+                        image: AssetImage("assets/images/nature.png"),
                       ),
                     ),
                   ),
@@ -108,29 +107,16 @@ class _JigsawWidgetState extends State<JigsawWidget> {
   Offset _pos = Offset.zero;
   late int _index;
 
-  // Future<Uint8List> _getImageFromWidget() async {
-  //   final RenderRepaintBoundary boundary =
-  //       _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-  //   final image = await boundary.toImage(pixelRatio: 1);
-  //   final byteData = await image.toByteData(format: ImageByteFormat.png);
-  //   final pngBytes = byteData!.buffer.asUint8List();
-  //   return pngBytes;
-  // }
-
   _getImageFromWidget() async {
-    try {
-      RenderRepaintBoundary? boundary = _globalKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
+    RenderRepaintBoundary? boundary =
+        _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
 
-      size = boundary.size;
-      var img = await boundary.toImage();
-      var byteData = await img.toByteData(format: ImageByteFormat.png);
-      var pngBytes = byteData!.buffer.asUint8List();
+    size = boundary.size;
+    var img = await boundary.toImage();
+    var byteData = await img.toByteData(format: ImageByteFormat.png);
+    var pngBytes = byteData!.buffer.asUint8List();
 
-      return ui.decodeImage(pngBytes);
-    } catch (e) {
-      print(Text("Error: ${e.toString()}"));
-    }
+    return ui.decodeImage(pngBytes);
   }
 
   Future<void> generalJigsawCropImage() async {
@@ -227,7 +213,6 @@ class _JigsawWidgetState extends State<JigsawWidget> {
   resetJigsaw() {
     images.clear();
     blocksNotifier = ValueNotifier<List<BlockClass>>(<BlockClass>[]);
-    // _carouselController = CarouselController();
     blocksNotifier.notifyListeners();
     setState(() {});
   }
