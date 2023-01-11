@@ -225,9 +225,25 @@ class JigsawWidgetState extends State<JigsawWidget> {
                           child: Container(
                             height: double.maxFinite,
                             width: double.maxFinite,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF77D8E),
-                            ),
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF701ebd),
+                                      Color(0xFF873bcc),
+                                      Color(0xFFfe4a97),
+                                      Color(0xFFe17763),
+                                      Color(0xFF68998c)
+                                    ],
+                                    stops: [
+                                      0.1,
+                                      0.4,
+                                      0.6,
+                                      0.8,
+                                      1
+                                    ],
+                                    begin: Alignment.topRight,
+                                    end: Alignment.bottomLeft)),
                             child: widget.child,
                           ),
                         )
@@ -235,7 +251,7 @@ class JigsawWidgetState extends State<JigsawWidget> {
                       Offstage(
                         offstage: !(blocks.isNotEmpty),
                         child: Container(
-                          color: Colors.grey[800],
+                          color: Colors.transparent,
                           height: sizeBox.height,
                           width: sizeBox.width,
                           child: CustomPaint(
@@ -287,8 +303,7 @@ class JigsawWidgetState extends State<JigsawWidget> {
                   ),
                 ),
               ),
-              Container(
-                color: Colors.black,
+              SizedBox(
                 height: 100,
                 child: CarouselSlider(
                   carouselController: _carouselController,
