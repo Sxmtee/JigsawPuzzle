@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:jigsawpuzzle/Screens/jigsawpuzzle2.dart';
 import 'package:jigsawpuzzle/Widgets/jigsawWidget.dart';
 
 class JigsawPuzzle extends StatefulWidget {
@@ -44,9 +43,6 @@ class _JigsawPuzzleState extends State<JigsawPuzzle> {
                 child: JigsawWidget(
                   callbackFinish: () {
                     print("CallBackFinish");
-                    var route = MaterialPageRoute(
-                        builder: ((context) => const JisawPuzzle2()));
-                    Navigator.push(context, route);
                   },
                   callbackSuccess: () {
                     print("CallBackSuccess");
